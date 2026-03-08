@@ -1,23 +1,38 @@
 import { useState } from "react";
 
-function Contact() {
-  // Estado del formulario con un solo objeto
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
+// 👇 Reemplaza esto con tu endpoint real de formspree.io
+const FORMSPREE_URL = import.meta.env.VITE_FORMSPREE_URL;
 
-  // Maneja cambios en cualquier campo del formulario
+function Contact() {
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  // "idle" | "loading" | "success" | "error"
+  const [status, setStatus] = useState("idle");
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("¡Gracias por tu mensaje! Te contactaremos pronto.");
-    setFormData({ name: "", email: "", message: "" });
+    setStatus("loading");
+
+    try {
+      const response = await fetch(FORMSPREE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setStatus("success");
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
   };
 
   return (
@@ -34,11 +49,11 @@ function Contact() {
             </div>
             <div className="contact-item">
               <h3>Teléfono</h3>
-              <a href="tel:+59173406396">+59173406396</a>
+              <a href="tel:+56987580525">+56987580525</a>
             </div>
             <div className="contact-item">
               <h3>Ubicación</h3>
-              <p>Chuquisaca, Bolivia</p>
+              <p>Santiago, Chile</p>
             </div>
           </div>
 
@@ -51,6 +66,7 @@ function Contact() {
               value={formData.name}
               onChange={handleChange}
               required
+              disabled={status === "loading"}
             />
             <input
               type="email"
@@ -59,6 +75,7 @@ function Contact() {
               value={formData.email}
               onChange={handleChange}
               required
+              disabled={status === "loading"}
             />
             <textarea
               name="message"
@@ -67,10 +84,28 @@ function Contact() {
               value={formData.message}
               onChange={handleChange}
               required
+              disabled={status === "loading"}
             />
-            <button type="submit" className="submit-btn">
-              Enviar Mensaje
+
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={status === "loading"}
+            >
+              {status === "loading" ? "Enviando..." : "Enviar Mensaje"}
             </button>
+
+            {/* Mensajes de resultado */}
+            {status === "success" && (
+              <p className="form-feedback form-feedback--success">
+                ✅ ¡Mensaje enviado! Te responderé pronto.
+              </p>
+            )}
+            {status === "error" && (
+              <p className="form-feedback form-feedback--error">
+                ❌ Algo salió mal. Intenta de nuevo o escríbeme directamente.
+              </p>
+            )}
           </form>
 
         </div>
